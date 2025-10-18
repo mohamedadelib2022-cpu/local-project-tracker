@@ -83,6 +83,7 @@ router.post('/projects', (req, res) => {
     client,
     phone,
     type,
+    createdAt: new Date().toISOString(),
     currentStage: STAGE_NAMES[0],
     stages: buildDefaultStages(),
   };
