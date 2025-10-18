@@ -1,0 +1,211 @@
+{
+  "projects": [
+    {
+      "id": 1760701803072,
+      "name": "ahmed",
+      "client": "qatan",
+      "phone": "123456",
+      "type": "villa",
+      "stages": [
+        {
+          "name": "Clients",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Sketch",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "3D Design",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Structural",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Architectural",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Construction",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Housing",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Tourism",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Civil Defense",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Operations",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Municipality",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Quantity Survey",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        }
+      ]
+    },
+    {
+      "id": 1760701814351,
+      "name": "asdasd",
+      "client": "asdasd",
+      "phone": "adasd",
+      "type": "large",
+      "stages": [
+        {
+          "name": "Clients",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Sketch",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "3D Design",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Structural",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Architectural",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Construction",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Housing",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Tourism",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Civil Defense",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Operations",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Municipality",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Quantity Survey",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        }
+      ]
+    },
+    {
+      "id": 1760702124416,
+      "name": "ahmed",
+      "client": "qatan",
+      "phone": "123456",
+      "type": "building",
+      "stages": [
+        {
+          "name": "Clients",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Sketch",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "3D Design",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Structural",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Architectural",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Construction",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Housing",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Tourism",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Civil Defense",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Government - Operations",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Municipality",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        },
+        {
+          "name": "Quantity Survey",
+          "engineer": "Unassigned",
+          "status": "Not Started"
+        }
+      ]
+    }
+  ]
+}

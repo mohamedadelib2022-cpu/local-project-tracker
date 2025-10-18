@@ -1,0 +1,139 @@
+/* ===== master.css ===== */
+body {
+  font-family: "Cairo", sans-serif;
+  direction: rtl;
+  background: #f7f8fa;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  background: #1e3a8a;
+  color: white;
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+header button {
+  background: #ef4444;
+  border: none;
+  padding: 8px 15px;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+header button:hover {
+  background: #dc2626;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 25px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h2 {
+  color: #1e3a8a;
+  margin-top: 0;
+}
+
+input, select {
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button.primary {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+button.primary:hover {
+  background: #1d4ed8;
+}
+
+.project-card {
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1e3a8a;
+  font-weight: bold;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.stage-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.stage-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  flex: 1 1 calc(33% - 10px);
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.stage-card.assigned {
+  border-left: 5px solid #10b981;
+}
+
+.stage-card.pending {
+  border-left: 5px solid #f59e0b;
+}
+
+.stage-card.complete {
+  border-left: 5px solid #3b82f6;
+}
+
+.stage-card select {
+  margin-top: 5px;
+  width: 100%;
+  font-size: 13px;
+}
+/* ===== تنسيق المراحل أفقيًا ===== */
+.stage-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.stage {
+  flex: 1 1 220px;
+  background: #f7f7f7;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}

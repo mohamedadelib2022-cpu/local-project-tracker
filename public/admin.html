@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة الإدارة</title>
+  <link rel="stylesheet" href="css/master.css" />
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f6f7fb;
+    }
+
+    header {
+      background: #2b3a67;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h2 {
+      margin: 0;
+    }
+
+    main {
+      padding: 20px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    form input, form select, form button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    form button {
+      background: #2b3a67;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    form button:hover {
+      background: #1a274a;
+    }
+
+    h3 {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    #projectList {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .project-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .stage-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stage {
+      flex: 1 1 150px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 8px;
+      background: #fafafa;
+    }
+
+    .stage h4 {
+      margin: 0 0 5px;
+      font-size: 14px;
+      color: #2b3a67;
+    }
+
+    .stage p {
+      margin: 2px 0;
+      font-size: 13px;
+    }
+
+    .delete-btn {
+      margin-top: 10px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>لوحة تحكم الإدارة</h2>
+    <button onclick="window.location.href='index.html'" style="background:#e74c3c; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">تسجيل الخروج</button>
+  </header>
+
+  <main>
+    <h3>إضافة مشروع جديد</h3>
+    <form id="addProjectForm">
+      <input type="text" id="projectName" placeholder="اسم المشروع" required />
+      <input type="text" id="clientName" placeholder="اسم العميل" required />
+      <input type="text" id="clientPhone" placeholder="رقم الهاتف" required />
+      <select id="projectType" required>
+        <option value="">-- اختر النوع --</option>
+        <option value="فيلا">فيلا</option>
+        <option value="بناية">بناية</option>
+        <option value="مشروع كبير">مشروع كبير</option>
+      </select>
+      <button type="submit">إضافة المشروع</button>
+    </form>
+
+    <h3>المشاريع الحالية</h3>
+    <div id="projectList"></div>
+  </main>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

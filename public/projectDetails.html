@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفاصيل المشروع</title>
+  <link rel="stylesheet" href="css/master.css">
+  <style>
+    body { font-family: "Tajawal", sans-serif; background-color: #f5f7fa; padding: 20px; }
+    .container { max-width: 900px; margin: auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; }
+    h2 { text-align: center; color: #333; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    .status { padding: 5px 10px; border-radius: 5px; }
+    .status.جاري { background-color: #fff3cd; color: #856404; }
+    .status.مكتمل { background-color: #d4edda; color: #155724; }
+    .status.متأخر { background-color: #f8d7da; color: #721c24; }
+    .back-btn { display: inline-block; margin-top: 20px; text-decoration: none; color: white; background: #007bff; padding: 10px 20px; border-radius: 5px; }
+    .back-btn:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>تفاصيل المشروع</h2>
+
+    <table id="projectDetailsTable">
+      <thead>
+        <tr>
+          <th>المرحلة</th>
+          <th>المهندس المسؤول</th>
+          <th>تاريخ البداية</th>
+          <th>تاريخ الانتهاء</th>
+          <th>المدة (أيام)</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <a href="admin.html" class="back-btn">رجوع</a>
+  </div>
+
+  <script>
+    // ======= استرجاع بيانات المشروع =======
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get("id");
+
+    const projects = JSON.parse(localStorage.getItem("projects")) || [];
+    const project = projects.find(p => p.id == projectId);
+
+    const tbody = document.querySelector("#projectDetailsTable tbody");
+
+    if (project && project.stages) {
+      project.stages.forEach(stage => {
+        const tr = document.createElement("tr");
+        const duration = stage.startDate && stage.endDate
+          ? Math.ceil((new Date(stage.endDate) - new Date(stage.startDate)) / (1000*60*60*24))
+          : "-";
+
+        tr.innerHTML = `
+          <td>${stage.name}</td>
+          <td>${stage.engineer || "-"}</td>
+          <td>${stage.startDate || "-"}</td>
+          <td>${stage.endDate || "-"}</td>
+          <td>${duration}</td>
+          <td><span class="status ${stage.status}">${stage.status}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } else {
+      tbody.innerHTML = `<tr><td colspan="6">لا توجد بيانات لهذا المشروع</td></tr>`;
+    }
+  </script>
+
+</body>
+</html>
