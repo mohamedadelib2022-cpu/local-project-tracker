@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         projectDiv.innerHTML = `
           <h3>${project.name}</h3>
-          <p>Client: ${project.clientName} - ${project.clientPhone}</p>
+          <p>Client: ${project.client || '-'} - ${project.phone || '-'}</p>
           ${stageEntries}
         `;
 
