@@ -58,26 +58,52 @@ function renderStages(project) {
 async function renderProjects() {
   const projects = await fetchProjects();
   projectList.innerHTML = '';
+
+  // Build Kanban columns by stage name
+  STAGE_NAMES.forEach((stageName) => {
+    const column = document.createElement('div');
+    column.className = 'kanban-column';
+    column.innerHTML = `
+      <h3>${stageName}</h3>
+      <div class="kanban-dropzone" data-stage="${stageName}"></div>
+    `;
+    projectList.appendChild(column);
+  });
+
+  // Place each project as a card into its current stage column
   projects.forEach((p) => {
     const card = document.createElement('div');
-    card.classList.add('project-card');
+    card.className = 'kanban-card';
+    card.setAttribute('draggable', 'true');
+    card.dataset.id = String(p.id);
+
+    // Engineer assignment UI tied to current stage
+    const currentStage = p.currentStage || STAGE_NAMES[0];
+    const stageData = (p.stages || {})[currentStage] || { engineer: null, status: 'Not Started' };
+
     card.innerHTML = `
-      <div class="project-header">
-        <div>${p.name} (${p.type}) — <small>${p.client} · ${p.phone}</small></div>
-        <div>
-          <button class="delete-btn" data-id="${p.id}">🗑️ حذف</button>
-        </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <strong>${p.name}</strong>
+        <button class="delete-btn" data-id="${p.id}">🗑️</button>
       </div>
-      <div class="stage-container" data-project-id="${p.id}">
-        ${renderStages(p)}
+      <div style="font-size:12px;color:#334155;">${p.client} · ${p.phone} · ${p.type}</div>
+      <div style="margin-top:6px;">
+        <div style="font-size:12px;">الحالة: <strong>${stageData.status}</strong></div>
+        <label style="font-size:12px;">تعيين مهندس:</label>
+        <select class="assign-select" data-project-id="${p.id}" data-stage="${currentStage}">
+          <option value="">-- اختر مهندس --</option>
+          ${ENGINEERS.map(e => `<option value="${e}" ${e===(stageData.engineer||'')? 'selected':''}>${e}</option>`).join('')}
+        </select>
       </div>
     `;
-    projectList.appendChild(card);
+
+    const dropzone = projectList.querySelector(`.kanban-dropzone[data-stage="${currentStage}"]`);
+    dropzone?.appendChild(card);
   });
 
   bindDeleteButtons();
   bindAssignSelects();
-  enableDragAndDrop();
+  enableKanbanDnD();
 }
 
 // إضافة مشروع جديد عبر API
@@ -147,42 +173,35 @@ function bindAssignSelects() {
   });
 }
 
-function enableDragAndDrop() {
-  // Each .stage is draggable; dragging between positions just reorders visual,
-  // but we interpret drop to advance status among [Not Started -> In Progress -> Done]
-  const stages = document.querySelectorAll('.stage');
-  stages.forEach((el) => {
-    el.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', JSON.stringify({
-        projectId: el.getAttribute('data-project-id'),
-        stage: el.getAttribute('data-stage')
-      }));
-      el.classList.add('dragging');
+function enableKanbanDnD() {
+  const cards = document.querySelectorAll('.kanban-card');
+  cards.forEach((card) => {
+    card.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', card.dataset.id || '');
     });
-    el.addEventListener('dragend', () => el.classList.remove('dragging'));
   });
 
-  const containers = document.querySelectorAll('.stage-container');
-  containers.forEach((container) => {
-    container.addEventListener('dragover', (e) => e.preventDefault());
-    container.addEventListener('drop', async (e) => {
+  document.querySelectorAll('.kanban-dropzone').forEach((zone) => {
+    zone.addEventListener('dragover', (e) => e.preventDefault());
+    zone.addEventListener('drop', async (e) => {
       e.preventDefault();
-      const payload = e.dataTransfer.getData('text/plain');
-      if (!payload) return;
-      const { projectId, stage } = JSON.parse(payload);
+      const projectId = e.dataTransfer.getData('text/plain');
+      if (!projectId) return;
+      const targetStage = zone.getAttribute('data-stage');
 
-      // Toggle/advance status when dropped anywhere in the same project
       const projects = await fetchProjects();
       const project = projects.find(p => String(p.id) === String(projectId));
       if (!project) return;
-      const stageData = project.stages?.[stage] || { status: 'Not Started', engineer: null };
-      const nextStatus = stageData.status === 'Not Started' ? 'In Progress' : (stageData.status === 'In Progress' ? 'Done' : 'Not Started');
-      project.stages[stage] = { ...stageData, status: nextStatus };
+
+      // When moved, set currentStage to target, keep engineer/status of that stage
+      project.currentStage = targetStage;
+      project.stages = project.stages || {};
+      project.stages[targetStage] = project.stages[targetStage] || { engineer: null, status: 'In Progress' };
 
       await fetch(`/api/projects/${projectId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stages: project.stages })
+        body: JSON.stringify({ currentStage: targetStage, stages: project.stages })
       });
       await renderProjects();
     });
