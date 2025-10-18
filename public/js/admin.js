@@ -1,99 +1,192 @@
 // ===== admin.js =====
 
 // عناصر الصفحة
-const form = document.getElementById("addProjectForm");
-const projectList = document.getElementById("projectList");
+const form = document.getElementById('addProjectForm');
+const projectList = document.getElementById('projectList');
 
-// تحميل المشاريع من localStorage
-let projects = JSON.parse(localStorage.getItem("projects")) || [];
+const STAGE_NAMES = [
+  'Sketch',
+  '3D Design',
+  'Structural',
+  'Architectural',
+  'Construction',
+  'Government - Housing',
+  'Government - Tourism',
+];
 
-// حفظ المشاريع
-function saveProjects() {
-  localStorage.setItem("projects", JSON.stringify(projects));
+const ENGINEERS = [
+  'mark',
+  'nihal',
+  'ahmed',
+  'faraj',
+  'shihab',
+  'aisha',
+  'nezar',
+  'mohamed',
+];
+
+function stageCardTemplate(projectId, stageName, stageData) {
+  const engineer = stageData?.engineer || 'غير معين';
+  const status = stageData?.status || 'Not Started';
+  return `
+    <div class="stage"
+         draggable="true"
+         data-project-id="${projectId}"
+         data-stage="${stageName}">
+      <h4>${stageName}</h4>
+      <p>المهندس: <strong>${engineer}</strong></p>
+      <p>الحالة: <strong>${status}</strong></p>
+      <label>تعيين مهندس:</label>
+      <select class="assign-select" data-project-id="${projectId}" data-stage="${stageName}">
+        <option value="">-- اختر مهندس --</option>
+        ${ENGINEERS.map(e => `<option value="${e}" ${e===engineer? 'selected':''}>${e}</option>`).join('')}
+      </select>
+    </div>
+  `;
 }
 
-// عرض المشاريع في الصفحة
-function renderProjects() {
-  projectList.innerHTML = "";
-  projects.forEach((p, i) => {
-    const card = document.createElement("div");
-    card.classList.add("project-card");
+async function fetchProjects() {
+  const res = await fetch('/api/projects');
+  return await res.json();
+}
+
+function renderStages(project) {
+  const stages = project.stages || {};
+  return STAGE_NAMES.map((name) => stageCardTemplate(project.id, name, stages[name])).join('');
+}
+
+async function renderProjects() {
+  const projects = await fetchProjects();
+  projectList.innerHTML = '';
+  projects.forEach((p) => {
+    const card = document.createElement('div');
+    card.classList.add('project-card');
     card.innerHTML = `
-      <h3>${p.name} (${p.type})</h3>
-      <p><strong>العميل:</strong> ${p.client}</p>
-      <p><strong>الهاتف:</strong> ${p.phone}</p>
-
-      <div class="stage-container">
-        ${renderStages(p.stages || {})}
+      <div class="project-header">
+        <div>${p.name} (${p.type}) — <small>${p.client} · ${p.phone}</small></div>
+        <div>
+          <button class="delete-btn" data-id="${p.id}">🗑️ حذف</button>
+        </div>
       </div>
-
-      <button onclick="deleteProject(${i})" class="delete-btn">🗑️ حذف المشروع</button>
+      <div class="stage-container" data-project-id="${p.id}">
+        ${renderStages(p)}
+      </div>
     `;
     projectList.appendChild(card);
   });
+
+  bindDeleteButtons();
+  bindAssignSelects();
+  enableDragAndDrop();
 }
 
-// عرض مراحل المشروع
-function renderStages(stages) {
-  const stageNames = [
-    "Sketch",
-    "3D Design",
-    "Structural",
-    "Architectural",
-    "Construction",
-    "Government - Housing",
-    "Government - Tourism",
-  ];
-
-  return stageNames
-    .map((name) => {
-      const s = stages[name] || { engineer: "غير معين", status: "لم يبدأ" };
-      return `
-        <div class="stage">
-          <h4>${name}</h4>
-          <p>المهندس: ${s.engineer}</p>
-          <p>الحالة: ${s.status}</p>
-        </div>
-      `;
-    })
-    .join("");
-}
-
-// إضافة مشروع جديد
-form.addEventListener("submit", (e) => {
+// إضافة مشروع جديد عبر API
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
-
-  const name = document.getElementById("projectName").value.trim();
-  const client = document.getElementById("clientName").value.trim();
-  const phone = document.getElementById("clientPhone").value.trim();
-  const type = document.getElementById("projectType").value.trim();
+  const name = document.getElementById('projectName').value.trim();
+  const client = document.getElementById('clientName').value.trim();
+  const phone = document.getElementById('clientPhone').value.trim();
+  const type = document.getElementById('projectType').value.trim();
 
   if (!name || !client || !phone || !type) {
-    alert("الرجاء إدخال جميع البيانات");
+    alert('الرجاء إدخال جميع البيانات');
     return;
   }
 
-  const newProject = {
-    name,
-    client,
-    phone,
-    type,
-    stages: {}, // لاحقًا ممكن نحفظ حالة كل مرحلة
-  };
-
-  projects.push(newProject);
-  saveProjects();
-  renderProjects();
+  const res = await fetch('/api/projects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, client, phone, type })
+  });
+  if (!res.ok) {
+    alert('حدث خطأ أثناء إضافة المشروع');
+    return;
+  }
+  await renderProjects();
   form.reset();
 });
 
-// حذف مشروع
-function deleteProject(index) {
-  if (confirm("هل أنت متأكد من حذف هذا المشروع؟")) {
-    projects.splice(index, 1);
-    saveProjects();
-    renderProjects();
-  }
+function bindDeleteButtons() {
+  document.querySelectorAll('.delete-btn[data-id]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      if (!confirm('هل أنت متأكد من حذف هذا المشروع؟')) return;
+      const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await renderProjects();
+      } else {
+        alert('تعذر حذف المشروع');
+      }
+    });
+  });
+}
+
+function bindAssignSelects() {
+  document.querySelectorAll('select.assign-select').forEach((sel) => {
+    sel.addEventListener('change', async (e) => {
+      const select = e.currentTarget;
+      const projectId = select.getAttribute('data-project-id');
+      const stage = select.getAttribute('data-stage');
+      const engineer = select.value || null;
+
+      // Fetch project, update specific stage engineer, save via PUT
+      const projects = await fetchProjects();
+      const project = projects.find(p => String(p.id) === String(projectId));
+      if (!project) return;
+      project.stages = project.stages || {};
+      const currentStage = project.stages[stage] || { status: 'Not Started', engineer: null };
+      project.stages[stage] = { ...currentStage, engineer };
+
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stages: project.stages })
+      });
+      await renderProjects();
+    });
+  });
+}
+
+function enableDragAndDrop() {
+  // Each .stage is draggable; dragging between positions just reorders visual,
+  // but we interpret drop to advance status among [Not Started -> In Progress -> Done]
+  const stages = document.querySelectorAll('.stage');
+  stages.forEach((el) => {
+    el.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', JSON.stringify({
+        projectId: el.getAttribute('data-project-id'),
+        stage: el.getAttribute('data-stage')
+      }));
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  });
+
+  const containers = document.querySelectorAll('.stage-container');
+  containers.forEach((container) => {
+    container.addEventListener('dragover', (e) => e.preventDefault());
+    container.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const payload = e.dataTransfer.getData('text/plain');
+      if (!payload) return;
+      const { projectId, stage } = JSON.parse(payload);
+
+      // Toggle/advance status when dropped anywhere in the same project
+      const projects = await fetchProjects();
+      const project = projects.find(p => String(p.id) === String(projectId));
+      if (!project) return;
+      const stageData = project.stages?.[stage] || { status: 'Not Started', engineer: null };
+      const nextStatus = stageData.status === 'Not Started' ? 'In Progress' : (stageData.status === 'In Progress' ? 'Done' : 'Not Started');
+      project.stages[stage] = { ...stageData, status: nextStatus };
+
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stages: project.stages })
+      });
+      await renderProjects();
+    });
+  });
 }
 
 // تحميل أولي

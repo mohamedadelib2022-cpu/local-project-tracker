@@ -11,12 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('engineerName').textContent = `👷 ${username}`;
 
   const container = document.getElementById('projectsContainer');
-  const logoutBtn = document.getElementById('logoutBtn');
-
-  logoutBtn.addEventListener('click', () => {
-    localStorage.clear();
-    location.href = 'index.html';
-  });
+  // Logout removed for engineers per requirement
 
   // Load projects
   fetch('/api/projects')

@@ -12,6 +12,25 @@ const __dirname = path.dirname(__filename);
 
 const dataFile = path.join(__dirname, 'data.json');
 
+// Canonical stage names used across the app (Odoo-like pipeline)
+const STAGE_NAMES = [
+  'Sketch',
+  '3D Design',
+  'Structural',
+  'Architectural',
+  'Construction',
+  'Government - Housing',
+  'Government - Tourism',
+];
+
+function buildDefaultStages() {
+  const stages = {};
+  for (const name of STAGE_NAMES) {
+    stages[name] = { engineer: null, status: 'Not Started' };
+  }
+  return stages;
+}
+
 // Ensure file exists and is valid JSON array
 function ensureDataFile() {
   try {
@@ -50,7 +69,23 @@ router.get('/projects', (req, res) => {
 // Add new project
 router.post('/projects', (req, res) => {
   const projects = readProjects();
-  const newProject = { ...req.body, id: Date.now() };
+  const nowId = Date.now();
+
+  // Extract allowed fields from body
+  const { name, client, phone, type } = req.body || {};
+  if (!name || !client || !phone || !type) {
+    return res.status(400).json({ error: 'name, client, phone, and type are required' });
+  }
+
+  const newProject = {
+    id: nowId,
+    name,
+    client,
+    phone,
+    type,
+    currentStage: STAGE_NAMES[0],
+    stages: buildDefaultStages(),
+  };
   projects.push(newProject);
   writeProjects(projects);
   res.status(201).json(newProject);
@@ -94,6 +129,17 @@ router.post('/markDone', (req, res) => {
   projects[index] = project;
   writeProjects(projects);
   return res.json({ ok: true });
+});
+
+// Delete a project
+router.delete('/projects/:id', (req, res) => {
+  const projects = readProjects();
+  const id = String(req.params.id);
+  const index = projects.findIndex((p) => String(p.id) === id);
+  if (index === -1) return res.status(404).json({ error: 'Project not found' });
+  const [removed] = projects.splice(index, 1);
+  writeProjects(projects);
+  res.json({ ok: true, removedId: removed.id });
 });
 
 export default router;
