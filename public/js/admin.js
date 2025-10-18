@@ -1,99 +1,211 @@
 // ===== admin.js =====
 
 // عناصر الصفحة
-const form = document.getElementById("addProjectForm");
-const projectList = document.getElementById("projectList");
+const form = document.getElementById('addProjectForm');
+const projectList = document.getElementById('projectList');
 
-// تحميل المشاريع من localStorage
-let projects = JSON.parse(localStorage.getItem("projects")) || [];
+const STAGE_NAMES = [
+  'Sketch',
+  '3D Design',
+  'Structural',
+  'Architectural',
+  'Construction',
+  'Government - Housing',
+  'Government - Tourism',
+];
 
-// حفظ المشاريع
-function saveProjects() {
-  localStorage.setItem("projects", JSON.stringify(projects));
+const ENGINEERS = [
+  'mark',
+  'nihal',
+  'ahmed',
+  'faraj',
+  'shihab',
+  'aisha',
+  'nezar',
+  'mohamed',
+];
+
+function stageCardTemplate(projectId, stageName, stageData) {
+  const engineer = stageData?.engineer || 'غير معين';
+  const status = stageData?.status || 'Not Started';
+  return `
+    <div class="stage"
+         draggable="true"
+         data-project-id="${projectId}"
+         data-stage="${stageName}">
+      <h4>${stageName}</h4>
+      <p>المهندس: <strong>${engineer}</strong></p>
+      <p>الحالة: <strong>${status}</strong></p>
+      <label>تعيين مهندس:</label>
+      <select class="assign-select" data-project-id="${projectId}" data-stage="${stageName}">
+        <option value="">-- اختر مهندس --</option>
+        ${ENGINEERS.map(e => `<option value="${e}" ${e===engineer? 'selected':''}>${e}</option>`).join('')}
+      </select>
+    </div>
+  `;
 }
 
-// عرض المشاريع في الصفحة
-function renderProjects() {
-  projectList.innerHTML = "";
-  projects.forEach((p, i) => {
-    const card = document.createElement("div");
-    card.classList.add("project-card");
-    card.innerHTML = `
-      <h3>${p.name} (${p.type})</h3>
-      <p><strong>العميل:</strong> ${p.client}</p>
-      <p><strong>الهاتف:</strong> ${p.phone}</p>
+async function fetchProjects() {
+  const res = await fetch('/api/projects');
+  return await res.json();
+}
 
-      <div class="stage-container">
-        ${renderStages(p.stages || {})}
-      </div>
+function renderStages(project) {
+  const stages = project.stages || {};
+  return STAGE_NAMES.map((name) => stageCardTemplate(project.id, name, stages[name])).join('');
+}
 
-      <button onclick="deleteProject(${i})" class="delete-btn">🗑️ حذف المشروع</button>
+async function renderProjects() {
+  const projects = await fetchProjects();
+  projectList.innerHTML = '';
+
+  // Build Kanban columns by stage name
+  STAGE_NAMES.forEach((stageName) => {
+    const column = document.createElement('div');
+    column.className = 'kanban-column';
+    column.innerHTML = `
+      <h3>${stageName}</h3>
+      <div class="kanban-dropzone" data-stage="${stageName}"></div>
     `;
-    projectList.appendChild(card);
+    projectList.appendChild(column);
   });
+
+  // Place each project as a card into its current stage column
+  projects.forEach((p) => {
+    const card = document.createElement('div');
+    card.className = 'kanban-card';
+    card.setAttribute('draggable', 'true');
+    card.dataset.id = String(p.id);
+
+    // Engineer assignment UI tied to current stage
+    const currentStage = p.currentStage || STAGE_NAMES[0];
+    const stageData = (p.stages || {})[currentStage] || { engineer: null, status: 'Not Started' };
+
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <strong>${p.name}</strong>
+        <button class="delete-btn" data-id="${p.id}">🗑️</button>
+      </div>
+      <div style="font-size:12px;color:#334155;">${p.client} · ${p.phone} · ${p.type}</div>
+      <div style="margin-top:6px;">
+        <div style="font-size:12px;">الحالة: <strong>${stageData.status}</strong></div>
+        <label style="font-size:12px;">تعيين مهندس:</label>
+        <select class="assign-select" data-project-id="${p.id}" data-stage="${currentStage}">
+          <option value="">-- اختر مهندس --</option>
+          ${ENGINEERS.map(e => `<option value="${e}" ${e===(stageData.engineer||'')? 'selected':''}>${e}</option>`).join('')}
+        </select>
+      </div>
+    `;
+
+    const dropzone = projectList.querySelector(`.kanban-dropzone[data-stage="${currentStage}"]`);
+    dropzone?.appendChild(card);
+  });
+
+  bindDeleteButtons();
+  bindAssignSelects();
+  enableKanbanDnD();
 }
 
-// عرض مراحل المشروع
-function renderStages(stages) {
-  const stageNames = [
-    "Sketch",
-    "3D Design",
-    "Structural",
-    "Architectural",
-    "Construction",
-    "Government - Housing",
-    "Government - Tourism",
-  ];
-
-  return stageNames
-    .map((name) => {
-      const s = stages[name] || { engineer: "غير معين", status: "لم يبدأ" };
-      return `
-        <div class="stage">
-          <h4>${name}</h4>
-          <p>المهندس: ${s.engineer}</p>
-          <p>الحالة: ${s.status}</p>
-        </div>
-      `;
-    })
-    .join("");
-}
-
-// إضافة مشروع جديد
-form.addEventListener("submit", (e) => {
+// إضافة مشروع جديد عبر API
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
-
-  const name = document.getElementById("projectName").value.trim();
-  const client = document.getElementById("clientName").value.trim();
-  const phone = document.getElementById("clientPhone").value.trim();
-  const type = document.getElementById("projectType").value.trim();
+  const name = document.getElementById('projectName').value.trim();
+  const client = document.getElementById('clientName').value.trim();
+  const phone = document.getElementById('clientPhone').value.trim();
+  const type = document.getElementById('projectType').value.trim();
 
   if (!name || !client || !phone || !type) {
-    alert("الرجاء إدخال جميع البيانات");
+    alert('الرجاء إدخال جميع البيانات');
     return;
   }
 
-  const newProject = {
-    name,
-    client,
-    phone,
-    type,
-    stages: {}, // لاحقًا ممكن نحفظ حالة كل مرحلة
-  };
-
-  projects.push(newProject);
-  saveProjects();
-  renderProjects();
+  const res = await fetch('/api/projects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, client, phone, type })
+  });
+  if (!res.ok) {
+    alert('حدث خطأ أثناء إضافة المشروع');
+    return;
+  }
+  await renderProjects();
   form.reset();
 });
 
-// حذف مشروع
-function deleteProject(index) {
-  if (confirm("هل أنت متأكد من حذف هذا المشروع؟")) {
-    projects.splice(index, 1);
-    saveProjects();
-    renderProjects();
-  }
+function bindDeleteButtons() {
+  document.querySelectorAll('.delete-btn[data-id]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      if (!confirm('هل أنت متأكد من حذف هذا المشروع؟')) return;
+      const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await renderProjects();
+      } else {
+        alert('تعذر حذف المشروع');
+      }
+    });
+  });
+}
+
+function bindAssignSelects() {
+  document.querySelectorAll('select.assign-select').forEach((sel) => {
+    sel.addEventListener('change', async (e) => {
+      const select = e.currentTarget;
+      const projectId = select.getAttribute('data-project-id');
+      const stage = select.getAttribute('data-stage');
+      const engineer = select.value || null;
+
+      // Fetch project, update specific stage engineer, save via PUT
+      const projects = await fetchProjects();
+      const project = projects.find(p => String(p.id) === String(projectId));
+      if (!project) return;
+      project.stages = project.stages || {};
+      const currentStage = project.stages[stage] || { status: 'Not Started', engineer: null };
+      project.stages[stage] = { ...currentStage, engineer };
+
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stages: project.stages })
+      });
+      await renderProjects();
+    });
+  });
+}
+
+function enableKanbanDnD() {
+  const cards = document.querySelectorAll('.kanban-card');
+  cards.forEach((card) => {
+    card.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', card.dataset.id || '');
+    });
+  });
+
+  document.querySelectorAll('.kanban-dropzone').forEach((zone) => {
+    zone.addEventListener('dragover', (e) => e.preventDefault());
+    zone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const projectId = e.dataTransfer.getData('text/plain');
+      if (!projectId) return;
+      const targetStage = zone.getAttribute('data-stage');
+
+      const projects = await fetchProjects();
+      const project = projects.find(p => String(p.id) === String(projectId));
+      if (!project) return;
+
+      // When moved, set currentStage to target, keep engineer/status of that stage
+      project.currentStage = targetStage;
+      project.stages = project.stages || {};
+      project.stages[targetStage] = project.stages[targetStage] || { engineer: null, status: 'In Progress' };
+
+      await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentStage: targetStage, stages: project.stages })
+      });
+      await renderProjects();
+    });
+  });
 }
 
 // تحميل أولي

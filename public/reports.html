@@ -5,9 +5,143 @@
   <link rel="stylesheet" href="css/master.css">
 </head>
 <body>
-  <header class="header"><h2>Reports</h2><a href="admin.html" class="btn secondary">Back</a></header>
+<header class="header"><h2>التقارير</h2><a href="admin.html" class="btn secondary">رجوع</a></header>
   <div class="container card">
-    <p>Reports and exports will appear here — placeholder.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+      <div class="project-card"><div>إجمالي المشاريع</div><div id="kpi-total" style="font-size:22px;font-weight:bold;">-</div></div>
+      <div class="project-card"><div>المشاريع قيد التنفيذ</div><div id="kpi-in-progress" style="font-size:22px;font-weight:bold;">-</div></div>
+      <div class="project-card"><div>المشاريع المكتملة</div><div id="kpi-done" style="font-size:22px;font-weight:bold;">-</div></div>
+    </div>
+
+    <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:end;">
+      <div>
+        <label>المرحلة</label>
+        <select id="filter-stage"></select>
+      </div>
+      <div>
+        <label>المهندس</label>
+        <input id="filter-engineer" placeholder="اسم المهندس">
+      </div>
+      <div>
+        <label>من تاريخ</label>
+        <input id="filter-from" type="date">
+      </div>
+      <div>
+        <label>إلى تاريخ</label>
+        <input id="filter-to" type="date">
+      </div>
+      <button id="btn-export" class="primary">تصدير CSV</button>
+    </div>
+
+    <div style="margin-top:16px;overflow:auto;">
+      <table id="tbl" style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="text-align:right;padding:8px;border:1px solid #e2e8f0;">المشروع</th>
+            <th style="text-align:right;padding:8px;border:1px solid #e2e8f0;">العميل</th>
+            <th style="text-align:right;padding:8px;border:1px solid #e2e8f0;">الهاتف</th>
+            <th style="text-align:right;padding:8px;border:1px solid #e2e8f0;">المرحلة</th>
+            <th style="text-align:right;padding:8px;border:1px solid #e2e8f0;">المهندس</th>
+            <th style="text-align:right;padding:8px;border:1px solid #e2e8f0;">الحالة</th>
+            <th style="text-align:right;padding:8px;border:1px solid #e2e8f0;">تاريخ الإنشاء</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
+  <script>
+    const STAGES = [
+      'Sketch','3D Design','Structural','Architectural','Construction','Government - Housing','Government - Tourism'
+    ];
+
+    async function fetchProjects(){
+      const res = await fetch('/api/projects');
+      return await res.json();
+    }
+
+    function fillStageFilter(){
+      const sel = document.getElementById('filter-stage');
+      sel.innerHTML = '<option value="">كل المراحل</option>' + STAGES.map(s=>`<option>${s}</option>`).join('');
+    }
+
+    function withinDateRange(createdAt, from, to){
+      if (!createdAt) return true;
+      const t = new Date(createdAt).getTime();
+      if (from){ const f = new Date(from).getTime(); if (t < f) return false; }
+      if (to){ const tt = new Date(to).getTime()+86400000-1; if (t > tt) return false; }
+      return true;
+    }
+
+    function computeKPIs(projects){
+      const total = projects.length;
+      let inProgress = 0, done = 0;
+      projects.forEach(p=>{
+        const cs = p.currentStage || STAGES[0];
+        const sd = (p.stages||{})[cs] || { status:'Not Started' };
+        if (sd.status === 'Done') done++; else if (sd.status === 'In Progress') inProgress++;
+      });
+      document.getElementById('kpi-total').textContent = total;
+      document.getElementById('kpi-in-progress').textContent = inProgress;
+      document.getElementById('kpi-done').textContent = done;
+    }
+
+    function toCSV(rows){
+      const esc = (s)=>(''+(s??'')).replaceAll('"','""');
+      return rows.map(r=>r.map(v=>`"${esc(v)}"`).join(',')).join('\n');
+    }
+
+    function renderTable(projects){
+      const stage = document.getElementById('filter-stage').value;
+      const engineer = document.getElementById('filter-engineer').value.trim().toLowerCase();
+      const from = document.getElementById('filter-from').value;
+      const to = document.getElementById('filter-to').value;
+
+      const tbody = document.querySelector('#tbl tbody');
+      tbody.innerHTML = '';
+
+      const rows = [];
+      projects.forEach(p=>{
+        const cs = p.currentStage || STAGES[0];
+        const sd = (p.stages||{})[cs] || { status:'Not Started', engineer:null };
+        if (stage && cs !== stage) return;
+        if (engineer && (sd.engineer||'').toLowerCase().indexOf(engineer) === -1) return;
+        if (!withinDateRange(p.createdAt, from, to)) return;
+        const row = [p.name, p.client, p.phone, cs, sd.engineer||'-', sd.status, p.createdAt||'-'];
+        rows.push(row);
+        const tr = document.createElement('tr');
+        row.forEach((cell)=>{
+          const td = document.createElement('td');
+          td.style.padding = '8px';
+          td.style.border = '1px solid #e2e8f0';
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+
+      // Export handler
+      document.getElementById('btn-export').onclick = () => {
+        const csv = toCSV([['Project','Client','Phone','Stage','Engineer','Status','CreatedAt'], ...rows]);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'projects_report.csv'; a.click();
+        setTimeout(()=>URL.revokeObjectURL(url), 1000);
+      };
+    }
+
+    async function init(){
+      fillStageFilter();
+      const projects = await fetchProjects();
+      computeKPIs(projects);
+      renderTable(projects);
+      ['filter-stage','filter-engineer','filter-from','filter-to'].forEach(id=>{
+        document.getElementById(id).addEventListener('input', ()=>renderTable(projects));
+        document.getElementById(id).addEventListener('change', ()=>renderTable(projects));
+      });
+    }
+    init();
+  </script>
 </body>
 </html>

@@ -123,7 +123,10 @@
 <body>
   <header>
     <h2>لوحة تحكم الإدارة</h2>
-    <button onclick="window.location.href='index.html'" style="background:#e74c3c; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">تسجيل الخروج</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button onclick="window.location.href='reports.html'" style="background:#2563eb; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">التقارير</button>
+      <button onclick="window.location.href='index.html'" style="background:#e74c3c; color:white; border:none; padding:8px 14px; border-radius:6px; cursor:pointer;">تسجيل الخروج</button>
+    </div>
   </header>
 
   <main>
@@ -141,8 +144,8 @@
       <button type="submit">إضافة المشروع</button>
     </form>
 
-    <h3>المشاريع الحالية</h3>
-    <div id="projectList"></div>
+    <h3>لوحة المشاريع (Kanban)</h3>
+    <div id="projectList" class="kanban"></div>
   </main>
 
   <script src="js/admin.js"></script>
