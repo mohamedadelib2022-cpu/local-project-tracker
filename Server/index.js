@@ -2,6 +2,7 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import apiRouter from './api.js';
 
 const app = express();
 const port = 5000;
@@ -13,6 +14,9 @@ const __dirname = path.dirname(__filename);
 // --- إعدادات Express ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// --- Mount API routes ---
+app.use('/api', apiRouter);
 
 // --- تقديم الملفات الثابتة (الواجهة الأمامية) ---
 app.use(express.static(path.join(__dirname, '../public')));
